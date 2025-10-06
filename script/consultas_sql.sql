@@ -1,18 +1,131 @@
 -- Verificação de valores nulos por coluna
+-- Todas as 23 colunas verificadas retornaram o valor 0, ou seja, nenhum nulo identificado.
 SELECT
   COUNTIF(Respondent_ID IS NULL) AS null_Respondent_ID,
   COUNTIF(Age IS NULL) AS null_Age,
-  ...
+  COUNTIF(Current_Status IS NULL) AS null_Current_Status,
+  COUNTIF(Field_Of_Study_Work IS NULL) AS null_Field_Of_Study_Work,
+  COUNTIF(AI_Impact_On_Field IS NULL) AS null_AI_Impact_On_Field,
+  COUNTIF(AI_Usage_During_College IS NULL) AS null_AI_Usage_During_College,
+  COUNTIF(Most_Used_AI_Tools_College IS NULL) AS null_Most_Used_AI_Tools_College,
+  COUNTIF(Purpose_Of_AI_College IS NULL) AS null_Purpose_Of_AI_College,
+  COUNTIF(AI_Helpfulness_Academic_Tasks IS NULL) AS null_AI_Helpfulness_Academic_Tasks,
+  COUNTIF(AI_Dependence_College IS NULL) AS null_AI_Dependence_College,
+  COUNTIF(AI_Creativity_Productivity_Boost IS NULL) AS null_AI_Creativity_Productivity_Boost,
+  COUNTIF(AI_Influence_Career_Choice IS NULL) AS null_AI_Influence_Career_Choice,
+  COUNTIF(AI_Job_Opportunity_Increase IS NULL) AS null_AI_Job_Opportunity_Increase,
+  COUNTIF(Job_Preference_AI_Reliance IS NULL) AS null_Job_Preference_AI_Reliance,
+  COUNTIF(AI_Job_Reduction_Perception IS NULL) AS null_AI_Job_Reduction_Perception,
+  COUNTIF(Readiness_For_AI_Industry IS NULL) AS null_Readiness_For_AI_Industry,
+  COUNTIF(Willingness_To_Learn_AI IS NULL) AS null_Willingness_To_Learn_AI,
+  COUNTIF(Workplace_AI_Adoption IS NULL) AS null_Workplace_AI_Adoption,
+  COUNTIF(AI_Work_Efficiency_Increase IS NULL) AS null_AI_Work_Efficiency_Increase,
+  COUNTIF(AI_Replacing_Human_Work IS NULL) AS null_AI_Replacing_Human_Work,
+  COUNTIF(View_On_AI_In_Workplace IS NULL) AS null_View_On_AI_In_Workplace,
+  COUNTIF(Need_To_Upskill_AI IS NULL) AS null_Need_To_Upskill_AI,
+  COUNTIF(Job_Survival_Next_10_Years IS NULL) AS null_Job_Survival_Next_10_Years
 FROM `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`;
 
--- Faixa etária dos respondentes
-SELECT MIN(Age) AS idade_minima, MAX(Age) AS idade_maxima
+-- 2 Identificando inconsistências 
+Todas as 23 colunas verificadas retornaram o valor 0, ou seja, nenhum nulo identificado.
+
+-- 2.1 Verificando consistência de idades
+SELECT
+  MIN(Age) AS idade_minima,
+  MAX(Age) AS idade_maxima
 FROM `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`;
 
--- Verificação de inconsistência: idade fora da faixa
+-- Verificando se realmente as idades estavam no intervalo entre 18 e 48 anos.
 SELECT Respondent_ID, Age
 FROM `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`
-WHERE Age <= 18 OR Age >= 48;
+WHERE Age <= 18 OR Age >= 48; ALTER
+
+-- 2.1 Verificar se há erros de digitação: "Studnt", "Profesional", etc.
+SELECT
+  Current_Status,
+  COUNT(*) as count
+FROM t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic
+GROUP BY Current_Status
+ORDER BY count DESC;
+
+-- Abaixo as colunas que foram verificadas inconsistências e que foram ajustadas: 
+Antes: Valores diferentes para "Nenhum": "None" e "N/A" ; Depois: Todos em N/A.
+
+UPDATE `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`
+SET Most_Used_AI_Tools_College =
+    CASE
+        WHEN Most_Used_AI_Tools_College = 'None' THEN 'N/A'
+        ELSE Most_Used_AI_Tools_College
+    END
+WHERE Most_Used_AI_Tools_College IS NOT NULL;
+
+
+Antes: Variações na forma de listar ferramentas: Às vezes vírgula, às vezes barra.
+Ferramentas agrupadas de formas diferentes
+
+"Google Bard / Gemini" foi substituído por Gemini
+UPDATE `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`
+SET Most_Used_AI_Tools_College =
+    CASE
+        WHEN Most_Used_AI_Tools_College LIKE '%Google Bard / Gemini%' THEN
+            REPLACE(Most_Used_AI_Tools_College, 'Google Bard / Gemini', 'Gemini')
+        ELSE Most_Used_AI_Tools_College
+    END
+WHERE Most_Used_AI_Tools_College IS NOT NULL;
+
+"Microsoft Copilot" foi substituído por Copilot
+UPDATE `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`
+SET Most_Used_AI_Tools_College =
+    CASE
+        WHEN Most_Used_AI_Tools_College LIKE '%Microsoft Copilot%' THEN
+            REPLACE(Most_Used_AI_Tools_College, 'Microsoft Copilot', 'Copilot')
+        ELSE Most_Used_AI_Tools_College
+    END
+WHERE Most_Used_AI_Tools_College IS NOT NULL;
+
+
+Github Copilot / Codeium foi substituído por Github ou Codeium
+UPDATE `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`
+SET Most_Used_AI_Tools_College =
+    CASE
+        WHEN Most_Used_AI_Tools_College LIKE '%Github Copilot / Codeium%' THEN
+            REPLACE(Most_Used_AI_Tools_College, 'Github Copilot / Codeium', 'Github ou Codeium')
+        ELSE Most_Used_AI_Tools_College
+    END
+WHERE Most_Used_AI_Tools_College IS NOT NULL;
+
+-- Purpose_Of_AI_College:
+--Antes N/A= 44 e None=13; Após comando N/A= 57.
+
+UPDATE `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`
+SET Purpose_Of_AI_College =
+    CASE
+        WHEN Purpose_Of_AI_College = 'None' THEN 'N/A'
+        ELSE Purpose_Of_AI_College
+    END
+    WHERE Most_Used_AI_Tools_College IS NOT NULL;
+
+-- Readiness_For_AI_Industry:
+--Antes: 2 valores fora do padrão numérico; Após comando: OK.
+
+UPDATE `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`
+SET Readiness_For_AI_Industry =
+    CASE
+        WHEN Readiness_For_AI_Industry = '1 - Not ready' THEN '1'
+        WHEN Readiness_For_AI_Industry = '5 - Very ready' THEN '5'
+        ELSE Readiness_For_AI_Industry
+    END
+WHERE Readiness_For_AI_Industry IS NOT NULL;
+
+-- AI_Work_Efficiency_Increase:
+--Antes: 1 valor fora do padrão numérico; Após comando: OK.
+UPDATE `t1engenhariadados.bit_a_bit.respondents_ai_impact_synthetic`
+SET AI_Work_Efficiency_Increase =
+    CASE
+        WHEN AI_Work_Efficiency_Increase = '1 - Not increasing' THEN '1'
+        ELSE AI_Work_Efficiency_Increase
+    END
+WHERE AI_Work_Efficiency_Increase IS NOT NULL;
 
 -- Frequência de status atual
 SELECT Current_Status, COUNT(*) as count
