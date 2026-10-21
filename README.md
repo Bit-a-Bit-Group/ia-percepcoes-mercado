@@ -47,7 +47,8 @@ Este projeto analisa como estudantes e profissionais percebem o impacto da Intel
 
 ### 📊 Dashboard Interativo
 
-🔗 [Visualizar Dashboard no Looker Studio](https://lookerstudio.google.com/s/giGifkAwfsY)
+![Visão geral do dashboard](dashboard/dash_ia.jpeg)
+*Dashboard no Looker Studio (link temporariamente indisponível por mudança de permissões na fonte de dados).*
 
 **Principais funcionalidades:**
 - Filtros por área de estudo e status profissional
